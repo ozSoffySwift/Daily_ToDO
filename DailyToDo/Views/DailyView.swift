@@ -111,3 +111,6 @@ struct DailyView: View {
 #Preview {
     DailyView() // Replace with the appropriate view
 }
+
+// just adding a comment for fun
+
