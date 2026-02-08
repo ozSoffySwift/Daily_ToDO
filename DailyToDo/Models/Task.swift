@@ -2,27 +2,35 @@
 //  Task.swift
 //  DailyToDo
 //
-//  Created by Oz Soffy on 03/07/2025.
+//  Core SwiftData model for daily tasks.
 //
 import Foundation
 import SwiftData
 
 @Model
-class Task {
+final class TodoTask: Identifiable {
     var id: UUID
     var title: String
-    var isRecurring: Bool
-    var recurrenceRule: RecurrenceRule?
+    var createdAt: Date
+    var scheduledDay: Date
     var isCompleted: Bool
-    var date: Date
+    var completedAt: Date?
+    var isSticky: Bool
 
-    init(title: String, isRecurring: Bool = false, recurrenceRule: RecurrenceRule? = nil, isCompleted: Bool = false, date: Date = .now) {
+    init(
+        title: String,
+        createdAt: Date,
+        scheduledDay: Date,
+        isCompleted: Bool = false,
+        completedAt: Date? = nil,
+        isSticky: Bool
+    ) {
         self.id = UUID()
         self.title = title
-        self.isRecurring = isRecurring
-        self.recurrenceRule = recurrenceRule
+        self.createdAt = createdAt
+        self.scheduledDay = scheduledDay
         self.isCompleted = isCompleted
-        self.date = date
+        self.completedAt = completedAt
+        self.isSticky = isSticky
     }
 }
-

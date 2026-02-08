@@ -2,115 +2,228 @@
 //  DailyView.swift
 //  DailyToDo
 //
-//  Created by Oz Soffy on 03/07/2025.
+//  Main daily task view.
 //
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct DailyView: View {
-    @Environment(\.modelContext) private var context // Access to SwiftData context
-    @Query private var tasks: [Task] // Automatically fetches Task objects
-    @Query private var reflections: [DailyReflection] // Fetch reflections
-    
-    @State private var selectedDate: Date = .now // Date currently being viewed
-    @State private var newNoteText: String = "" // Text for daily reflection
-    
-    @State private var newTaskTitle: String = ""    // Holds the new task input
-    @State private var isRecurring: Bool = false    // Tracks whether task repeats
+    enum Destination: Hashable {
+        case archive
+        case about
+    }
 
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var viewModel = DailyTaskViewModel()
+    @State private var navigationPath: [Destination] = []
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+        NavigationStack(path: $navigationPath) {
+            VStack(spacing: 16) {
+                headerView
 
-                    // MARK: Date Display
-                    Text(formattedDate(selectedDate))
-                        .font(.largeTitle)
-                        .bold()
+                taskListView
 
-                    // MARK: One-Time Tasks
-                    TaskSectionView(
-                        title: "One-Time Tasks",
-                        tasks: tasks.filter { !$0.isRecurring && isSameDay($0.date, selectedDate) }
-                    )
+                TaskInputView(
+                    title: $viewModel.newTaskTitle,
+                    onAddOneTime: { viewModel.addTask(isSticky: false) },
+                    onAddSticky: { viewModel.addTask(isSticky: true) }
+                )
+                .padding(.horizontal)
 
-                    // MARK: Recurring Tasks
-                    TaskSectionView(
-                        title: "Recurring Tasks",
-                        tasks: tasks.filter { $0.isRecurring }
-                    )
-
-                    // MARK: Reflection
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Reflection")
-                            .font(.headline)
-
-                        TextEditor(text: $newNoteText)
-                            .frame(height: 100)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2)))
-
-                        Button("Save Reflection") {
-                            let reflection = DailyReflection(date: selectedDate, notes: newNoteText)
-                            context.insert(reflection)
+                dayNavigationView
+            }
+            .padding(.top, 12)
+            .background(Color.white.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button("Today") {
+                            viewModel.goToToday()
                         }
-                        .buttonStyle(.borderedProminent)
+
+                        Button("Calendar") {
+                            viewModel.showCalendarPicker = true
+                        }
+
+                        Button("Archive") {
+                            navigationPath.append(.archive)
+                        }
+
+                        Button("About") {
+                            navigationPath.append(.about)
+                        }
+                    } label: {
+                        Image(systemName: "line.horizontal.3")
+                            .foregroundColor(.black)
                     }
                 }
-                .padding()
             }
-            .navigationTitle("Daily ToDo")
-            .padding()
-            .padding()
-            
-            // MARK: Add New Task Section
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Add New Task")
-                    .font(.headline)
-
-                // Task title input
-                TextField("What do you want to do?", text: $newTaskTitle)
-                    .textFieldStyle(.roundedBorder)
-
-                // Recurring toggle
-                Toggle("Is this a recurring task?", isOn: $isRecurring)
-
-                // Save button
-                Button("Add Task") {
-                    let newTask = Task(
-                        title: newTaskTitle,
-                        isRecurring: isRecurring,
-                        date: selectedDate
-                    )
-                    context.insert(newTask)         // Save task to SwiftData
-                    try? context.save()             // Commit changes
-                    newTaskTitle = ""               // Reset input
-                    isRecurring = false             // Reset toggle
+            .sheet(isPresented: $viewModel.showCalendarPicker) {
+                CalendarPickerSheet(
+                    selectedDate: viewModel.selectedDate,
+                    onSelect: { date in
+                        viewModel.setSelectedDate(date)
+                        viewModel.showCalendarPicker = false
+                    }
+                )
+            }
+            .navigationDestination(for: Destination.self) { destination in
+                switch destination {
+                case .archive:
+                    ArchiveView(viewModel: viewModel)
+                case .about:
+                    AboutView()
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(newTaskTitle.isEmpty)     // Prevent empty task entry
             }
-            .padding(.vertical)
-
+            .onAppear {
+                viewModel.bindIfNeeded(context: modelContext)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+                viewModel.handleSignificantTimeChange()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+                viewModel.handleSignificantTimeChange()
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                if newPhase == .active {
+                    viewModel.handleSignificantTimeChange()
+                }
+            }
         }
     }
 
-    // Helper: Check if task date matches selected date
-    private func isSameDay(_ d1: Date, _ d2: Date) -> Bool {
-        Calendar.current.isDate(d1, inSameDayAs: d2)
+    private var headerView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(viewModel.selectedDate.formattedDay())
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .foregroundColor(.black)
+
+            Text(viewModel.selectedDate.formattedWeekday())
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundColor(.black.opacity(0.6))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal)
     }
 
-    // Helper: Format date nicely
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .full
-        return formatter.string(from: date)
+    private var taskListView: some View {
+        List {
+            ForEach(viewModel.tasks) { task in
+                TaskRowView(
+                    task: task,
+                    onToggleComplete: { viewModel.toggleCompleted(task) },
+                    onToggleSticky: { viewModel.toggleSticky(task) }
+                )
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.white)
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+    }
+
+    private var dayNavigationView: some View {
+        HStack {
+            Button(action: {
+                viewModel.goToPreviousDay()
+            }) {
+                Image(systemName: "chevron.left.circle.fill")
+                    .font(.system(size: 30))
+                    .foregroundColor(.black)
+            }
+
+            Spacer()
+
+            Button(action: {
+                viewModel.goToNextDay()
+            }) {
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 30))
+                    .foregroundColor(.black)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 12)
     }
 }
 
 #Preview {
-    DailyView() // Replace with the appropriate view
+    DailyView()
+        .modelContainer(for: TodoTask.self, inMemory: true)
 }
 
-// just adding a comment for fun
+// MARK: - Archive
 
+struct ArchiveView: View {
+    @ObservedObject var viewModel: DailyTaskViewModel
+
+    var body: some View {
+        List {
+            if viewModel.archiveTasks.isEmpty {
+                Text("No completed tasks yet.")
+                    .foregroundColor(.black.opacity(0.6))
+                    .listRowSeparator(.hidden)
+            } else {
+                ForEach(viewModel.archiveTasks) { task in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(task.title)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.black)
+
+                        if let completedAt = task.completedAt {
+                            Text("Completed \(completedAt.formatted(date: .abbreviated, time: .shortened))")
+                                .font(.system(size: 12))
+                                .foregroundColor(.black.opacity(0.6))
+                        }
+                    }
+                    .padding(.vertical, 6)
+                    .listRowSeparator(.hidden)
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.white)
+        .navigationTitle("Archive")
+        .onAppear {
+            viewModel.refreshArchive()
+        }
+    }
+}
+
+// MARK: - About
+
+struct AboutView: View {
+    var body: some View {
+        VStack(spacing: 18) {
+            Text(AppInfo.appName)
+                .font(.system(size: 28, weight: .semibold, design: .rounded))
+                .foregroundColor(.black)
+
+            Text("Version \(AppInfo.versionString)")
+                .font(.system(size: 14))
+                .foregroundColor(.black.opacity(0.6))
+
+            Text("Developer: \(AppInfo.developerName)")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.black)
+
+            VStack(spacing: 10) {
+                Link("LinkedIn", destination: AppLinks.linkedIn)
+                Link("Facebook", destination: AppLinks.facebook)
+                Link("Instagram", destination: AppLinks.instagram)
+                Link("Twitter (X)", destination: AppLinks.twitter)
+            }
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(.black)
+
+            Spacer()
+        }
+        .padding()
+        .background(Color.white.ignoresSafeArea())
+        .navigationTitle("About")
+    }
+}

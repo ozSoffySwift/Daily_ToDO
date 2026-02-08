@@ -12,7 +12,7 @@ import SwiftData
 struct DailyToDoApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            TodoTask.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +25,8 @@ struct DailyToDoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            DailyView()
+                .preferredColorScheme(.light)
         }
         .modelContainer(sharedModelContainer)
     }

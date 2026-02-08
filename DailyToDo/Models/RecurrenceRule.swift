@@ -2,18 +2,25 @@
 //  RecurrenceRule.swift
 //  DailyToDo
 //
-//  Created by Oz Soffy on 03/07/2025.
+//  App-wide display helpers.
 //
+
 import Foundation
 
-// Enum to define task repetition frequency
-enum RecurrenceRule: String, Codable, CaseIterable, Identifiable {
-    case none      // One-time task (default)
-    case daily     // Repeats every day
-    case weekly    // Repeats every week
-    case monthly   // Repeats every month
-    case yearly    // Repeats every year
+enum AppInfo {
+    static let appName = "Daily Todo"
+    static let developerName = "Oz Soffy"
 
-    var id: String { rawValue } // Conform to Identifiable for SwiftUI use
+    static var versionString: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return "\(version) (\(build))"
+    }
 }
 
+enum AppLinks {
+    static let linkedIn = URL(string: "https://www.linkedin.com")!
+    static let facebook = URL(string: "https://www.facebook.com")!
+    static let instagram = URL(string: "https://www.instagram.com")!
+    static let twitter = URL(string: "https://x.com")!
+}

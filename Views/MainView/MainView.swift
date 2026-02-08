@@ -2,95 +2,139 @@ import SwiftUI
 
 struct MainView: View {
     @StateObject private var taskManager = TaskManager()
-    @State private var showingAddTask = false
-    @State private var isAddingTask = false
-    @State private var newTaskTitle = ""
-    @FocusState private var isTextFieldFocused: Bool
     @State private var selectedDate = Date()
     @State private var showSideMenu = false
+    @State private var showingEditor = false
+    @State private var editingItem: TaskItem?
 
     private var formattedSelectedDate: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yyyy"
+        formatter.dateFormat = "MMMM d, yyyy"
         return formatter.string(from: selectedDate)
     }
 
-    var tasksForSelectedDate: [Task] {
-        taskManager.tasksByDate[formattedSelectedDate] ?? []
+    private var weekdaySelectedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+        return formatter.string(from: selectedDate)
+    }
+
+    private var isToday: Bool {
+        Calendar.current.isDateInToday(selectedDate)
+    }
+
+    var taskItemsForSelectedDate: [TaskItem] {
+        taskManager.taskItems(for: selectedDate)
     }
 
     var body: some View {
         ZStack {
             NavigationView {
-                VStack {
+                VStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(formattedSelectedDate)
+                            .font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .foregroundColor(.primary)
+                        Text(isToday ? "Today • \(weekdaySelectedDate)" : weekdaySelectedDate)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+
                     List {
-                        ForEach(tasksForSelectedDate) { task in
-                            Toggle(isOn: Binding(
-                                get: { task.isDone },
-                                set: { newValue in
-                                    taskManager.toggleTask(task, for: selectedDate)
-                                }
-                            )) {
-                                Text(task.title)
-                            }
-                        }
-                        .onDelete { offsets in
-                            taskManager.deleteTask(at: offsets, for: selectedDate)
-                        }
-
-                        Section {
-                            if isAddingTask {
-                                HStack {
-                                    TextField("New task", text: $newTaskTitle, onCommit: addNewTask)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .focused($isTextFieldFocused)
-
-                                    Button(action: addNewTask) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.green)
-                                    }
-                                }
-                                .onAppear {
-                                    isTextFieldFocused = true
-                                }
-                            } else {
+                        ForEach(taskItemsForSelectedDate) { item in
+                            HStack(spacing: 12) {
                                 Button {
-                                    withAnimation {
-                                        isAddingTask = true
-                                    }
+                                    taskManager.toggleTask(item, for: selectedDate)
                                 } label: {
-                                    HStack {
-                                        Image(systemName: "plus.circle")
-                                        Text("Add Task")
-                                    }
-                                    .foregroundColor(.blue)
+                                    Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(item.isDone ? .green : .secondary)
+                                        .font(.system(size: 20))
                                 }
+                                .buttonStyle(.plain)
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(item.title)
+                                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                                        .foregroundColor(item.isDone ? .secondary : .primary)
+                                        .strikethrough(item.isDone, color: .secondary)
+
+                                    if let recurrenceLabel = item.recurrenceLabel {
+                                        Text(recurrenceLabel.uppercased())
+                                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                            .foregroundColor(.orange)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 3)
+                                            .background(Color.orange.opacity(0.12))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+
+                                Spacer()
+                            }
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    taskManager.deleteTask(item: item, for: selectedDate)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+
+                                Button {
+                                    editingItem = item
+                                    showingEditor = true
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
                             }
                         }
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
 
-                    // 🠔🠖 Arrow Buttons Below List
                     HStack {
                         Button(action: {
-                            selectedDate = Calendar.current.date(byAdding: .day, value: -1, to: selectedDate)!
+                            selectedDate = Calendar.current.date(byAdding: .day, value: -1, to: selectedDate) ?? selectedDate
                         }) {
                             Image(systemName: "chevron.left.circle.fill")
                                 .font(.largeTitle)
+                                .foregroundColor(.primary)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            showingEditor = true
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Task")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 10)
+                            .background(Color.yellow.opacity(0.18))
+                            .foregroundColor(.primary)
+                            .clipShape(Capsule())
                         }
 
                         Spacer()
 
                         Button(action: {
-                            selectedDate = Calendar.current.date(byAdding: .day, value: 1, to: selectedDate)!
+                            selectedDate = Calendar.current.date(byAdding: .day, value: 1, to: selectedDate) ?? selectedDate
                         }) {
                             Image(systemName: "chevron.right.circle.fill")
                                 .font(.largeTitle)
+                                .foregroundColor(.primary)
                         }
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 10)
                 }
-                .navigationTitle("Today: \(formattedSelectedDate)")
+                .background(Color(.systemGroupedBackground))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button {
@@ -102,6 +146,13 @@ struct MainView: View {
                         }
                     }
                 }
+            }
+            .sheet(isPresented: $showingEditor, onDismiss: { editingItem = nil }) {
+                TaskEditorView(
+                    taskManager: taskManager,
+                    date: selectedDate,
+                    existingItem: editingItem
+                )
             }
 
             // Side Menu & Dim Background
@@ -126,13 +177,5 @@ struct MainView: View {
                 .zIndex(1)
             }
         }
-    }
-
-    private func addNewTask() {
-        let trimmedTitle = newTaskTitle.trimmingCharacters(in: .whitespaces)
-        guard !trimmedTitle.isEmpty else { return }
-        taskManager.addTask(title: trimmedTitle, for: selectedDate)
-        newTaskTitle = ""
-        isAddingTask = false
     }
 }
