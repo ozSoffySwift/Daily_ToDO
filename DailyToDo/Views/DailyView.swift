@@ -6,7 +6,7 @@
 //
 import SwiftUI
 import SwiftData
-import UIKit
+import UIKit //love is love
 
 struct DailyView: View {
     enum Destination: Hashable {
@@ -41,6 +41,9 @@ struct DailyView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button("Today") {
+                            viewModel.goToToday()
+                        }
+                        Button("Today2") {
                             viewModel.goToToday()
                         }
 
