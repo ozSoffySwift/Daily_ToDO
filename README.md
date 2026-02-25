@@ -1,6 +1,6 @@
-# 📅 Todo Daily
+# 📅 Daily 2do
 
-**Todo Daily** is a simple and intuitive iOS app that helps users manage daily tasks with ease. Built with **SwiftUI**, the app supports date-based task tracking and a smooth hamburger menu for quick navigation.
+**Daily 2do** is a simple and intuitive iOS app that helps users manage daily tasks with ease. Built with **SwiftUI**, the app supports date-based task tracking and a smooth hamburger menu for quick navigation.
 
 ## ✨ Features
 
