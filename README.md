@@ -1,33 +1,34 @@
 # 📅 Daily 2do
 
-**Daily 2do** is a simple and intuitive iOS app that helps users manage daily tasks with ease. Built with **SwiftUI**, the app supports date-based task tracking and a smooth hamburger menu for quick navigation.
+**Daily 2do** is a simple, fast iOS app for managing daily tasks and habits. Built with **SwiftUI** and **SwiftData**, it combines one-off tasks with flexible recurring habits, local reminders, and a warm, distraction-free design — all iPhone-only and portrait-only for a focused experience.
 
 ## ✨ Features
 
-- ✅ One-time, sticky (carries over until done), and recurring tasks
+- ✅ One-time, sticky (carries over until done), and recurring tasks — all in one quick-add flow
 - 🔁 Flexible recurrence rules — daily, weekdays, or custom days of the week
 - 🔔 Optional local reminders for any task, with tap-to-open deep linking
+- ⚡ Fast inline "add task" card — no modal popups, with an expandable Options panel for type/recurrence/reminders
+- 🟢 Animated progress ring showing today's completed/total count, right in the top bar
+- 🌱 Six starter habits (drink water, read, gratitude, and more) seeded automatically on first launch
 - 📆 Navigate between dates using left/right arrows, or jump via the calendar picker
-- 🟢 Animated progress ring showing today's completed/total count
 - 🗂️ Archive of completed tasks
-- 🌗 Full Dark Mode support
-- 🧼 Clean, modern SwiftUI interface backed by SwiftData
+- 🎨 Warm cream-and-coral "soft pastel wellness" theme with full Dark Mode support
+- ✨ Animated launch splash and a matching progress-ring app icon
+- 📱 iPhone-only, portrait-only — no iPad or landscape support
 
 ## 📸 Screenshots
 
-### Main Task List!
+| Daily list (light) | Quick add + Options | Daily list (dark) |
+| --- | --- | --- |
+| ![Daily list, light mode](Screenshots/daily-view-light.png) | ![Inline add-task flow with Options expanded](Screenshots/add-task-flow.png) | ![Daily list, dark mode](Screenshots/daily-view-dark.png) |
 
-
-![Main Task List Screenshot - iPhone 16 Pro](https://github.com/user-attachments/assets/eba4be26-a91f-4bae-adc2-6ebda130b3e3)
-
-
-> Note: Replace these image links with actual screenshots you upload to a `Screenshots/` folder in your repo.
+<img src="Screenshots/app-icon.png" alt="Daily 2do app icon" width="120" />
 
 ## 🚀 Getting Started
 
 1. Clone the repo:
     ```bash
-    git clone https://github.com/ozSoffy-Swift/Todo-Daily.git
+    git clone https://github.com/ozSoffySwift/Daily_2do.git
     ```
 
 2. Open the project in Xcode:
@@ -35,7 +36,7 @@
     open DailyToDo.xcodeproj
     ```
 
-3. Build and run the app on an iPhone simulator or device.
+3. Build and run the app on an iPhone simulator or device (iOS 18.5+).
 
 ## 🛠 Technologies
 
@@ -53,4 +54,3 @@
 ---
 
 Want to contribute or suggest features? Feel free to open issues or pull requests.
-
