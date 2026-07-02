@@ -7,13 +7,19 @@
 
 import SwiftUI
 
+/// A sheet with a calendar grid for jumping the daily view to any date.
 struct CalendarPickerSheet: View {
+    /// The date to preselect when the calendar first appears.
     let selectedDate: Date
+    /// Called with the chosen date when the user taps "Go to date".
     let onSelect: (Date) -> Void
 
+    /// Dismisses this sheet.
     @Environment(\.dismiss) private var dismiss
+    /// The date currently highlighted in the calendar grid, before it's confirmed.
     @State private var draftDate: Date
 
+    /// Creates the sheet, seeding the draft selection from the caller's current date.
     init(selectedDate: Date, onSelect: @escaping (Date) -> Void) {
         self.selectedDate = selectedDate
         self.onSelect = onSelect
@@ -29,7 +35,7 @@ struct CalendarPickerSheet: View {
                     displayedComponents: [.date]
                 )
                 .datePickerStyle(.graphical)
-                .tint(.black)
+                .tint(.accentColor)
                 .padding()
 
                 Button("Go to date") {
@@ -39,13 +45,13 @@ struct CalendarPickerSheet: View {
                 .font(.system(size: 16, weight: .semibold))
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(Color.black.opacity(0.08))
-                .foregroundColor(.black)
+                .background(Color.accentColor.opacity(0.12))
+                .foregroundStyle(Color.accentColor)
                 .clipShape(Capsule())
 
                 Spacer()
             }
-            .background(Color.white)
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Calendar")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -55,6 +61,5 @@ struct CalendarPickerSheet: View {
                 }
             }
         }
-        .preferredColorScheme(.light)
     }
 }

@@ -4,11 +4,14 @@
 
 ## ✨ Features
 
-- ✅ Add and mark daily tasks as complete
-- 📆 Navigate between dates using left/right arrows
-- 🗂️ Organized view of tasks by day
-- 📋 Slide-in hamburger menu for additional views like calendar or archive
-- 🧼 Clean and modern SwiftUI interface
+- ✅ One-time, sticky (carries over until done), and recurring tasks
+- 🔁 Flexible recurrence rules — daily, weekdays, or custom days of the week
+- 🔔 Optional local reminders for any task, with tap-to-open deep linking
+- 📆 Navigate between dates using left/right arrows, or jump via the calendar picker
+- 🟢 Animated progress ring showing today's completed/total count
+- 🗂️ Archive of completed tasks
+- 🌗 Full Dark Mode support
+- 🧼 Clean, modern SwiftUI interface backed by SwiftData
 
 ## 📸 Screenshots
 
@@ -29,16 +32,18 @@
 
 2. Open the project in Xcode:
     ```
-    open TodoDaily.xcodeproj
+    open DailyToDo.xcodeproj
     ```
 
 3. Build and run the app on an iPhone simulator or device.
 
 ## 🛠 Technologies
 
-- Swift 5
+- Swift 5 / Swift 6
 - SwiftUI
-- MVVM Architecture (with `TaskManager` as a state object)
+- SwiftData for persistence
+- MVVM + repository pattern (`SwiftDataTaskRepository`, `DailyTaskViewModel`)
+- `UNUserNotificationCenter` for local reminders
 
 ## 👤 Author
 
